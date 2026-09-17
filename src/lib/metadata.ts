@@ -55,9 +55,11 @@ export function titleFromFilename(filename: string): string {
   return filename.replace(/\.[^/.]+$/, '').replace(/[_-]+/g, ' ').trim()
 }
 
-const SUPPORTED_TYPES = ['audio/mpeg', 'audio/wav', 'audio/x-wav', 'audio/mp4', 'audio/x-m4a', 'audio/flac', 'audio/ogg']
-const SUPPORTED_EXT = /\.(mp3|wav|m4a|flac|ogg)$/i
+const LIKELY_NOT_AUDIO = /\.(jpe?g|png|gif|webp|heic|pdf|docx?|xlsx?|pptx?|zip|rar|7z|txt|json|mp4|mov|avi|mkv|webm)$/i
 
-export function isSupportedAudioFile(file: File): boolean {
-  return SUPPORTED_TYPES.includes(file.type) || SUPPORTED_EXT.test(file.name)
+export function isLikelyNotAudio(file: File): boolean {
+  if (file.type && !file.type.startsWith('audio/') && !file.type.startsWith('video/')) {
+    return LIKELY_NOT_AUDIO.test(file.name) || file.type.startsWith('image/') || file.type === 'application/pdf'
+  }
+  return LIKELY_NOT_AUDIO.test(file.name)
 }
