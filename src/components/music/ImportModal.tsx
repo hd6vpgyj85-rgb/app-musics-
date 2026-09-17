@@ -3,7 +3,7 @@ import { UploadCloud, Loader2 } from 'lucide-react'
 import { Modal } from '../ui/Modal'
 import { Button } from '../ui/Button'
 import { ImportItemRow } from './ImportItemRow'
-import { extractTags, getAudioDuration, isSupportedAudioFile, titleFromFilename } from '../../lib/metadata'
+import { extractTags, getAudioDuration, isLikelyNotAudio, titleFromFilename } from '../../lib/metadata'
 import { addSong, getOrCreateArtist, getOrCreateAlbum } from '../../db/library'
 import { db } from '../../db/db'
 import { useToastStore } from '../../store/toastStore'
@@ -32,10 +32,15 @@ export function ImportModal({ open, onClose }: { open: boolean; onClose: () => v
   const push = useToastStore((s) => s.push)
 
   async function addFiles(fileList: FileList | File[]) {
-    const files = Array.from(fileList).filter(isSupportedAudioFile)
+    const all = Array.from(fileList)
+    const files = all.filter((f) => !isLikelyNotAudio(f))
+    const rejected = all.length - files.length
     if (files.length === 0) {
-      push('Ningún archivo compatible (MP3, WAV, M4A, FLAC, OGG).', 'error')
+      push('No se detectó ningún archivo de audio en tu selección.', 'error')
       return
+    }
+    if (rejected > 0) {
+      push(`${rejected} archivo${rejected === 1 ? '' : 's'} omitido${rejected === 1 ? '' : 's'} por no parecer audio.`, 'info')
     }
 
     const existingSongs = await db.songs.toArray()
@@ -176,10 +181,10 @@ export function ImportModal({ open, onClose }: { open: boolean; onClose: () => v
       >
         <UploadCloud size={30} className="text-accent-400 mb-3" />
         <p className="text-sm font-medium mb-1">Arrastra tus canciones aquí</p>
-        <p className="text-xs text-text-faint mb-4">MP3, WAV, M4A, FLAC, OGG</p>
+        <p className="text-xs text-text-faint mb-4">MP3, WAV, M4A, FLAC, OGG y otros formatos de audio</p>
         <label className="btn bg-surface2 border border-border text-sm h-9 px-4 cursor-pointer hover:bg-[#262633]">
           Elegir archivos
-          <input type="file" accept="audio/*,.flac" multiple className="hidden" onChange={handlePick} />
+          <input type="file" multiple className="hidden" onChange={handlePick} />
         </label>
       </div>
 
